@@ -1,4 +1,4 @@
-package com.Fleet_Management;
+package com.fleet_management;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
