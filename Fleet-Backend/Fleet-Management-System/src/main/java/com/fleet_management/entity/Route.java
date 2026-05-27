@@ -2,6 +2,7 @@
 package com.fleet.entity;
 
 import com.fleet_management.entity.Driver;
+import com.fleet_management.entity.RouteStatus;
 import com.fleet_management.entity.Vehicle;
 import jakarta.persistence.*;
 import lombok.Data;

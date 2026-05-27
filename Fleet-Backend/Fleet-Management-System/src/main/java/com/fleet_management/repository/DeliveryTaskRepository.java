@@ -1,8 +1,8 @@
 // repository/DeliveryTaskRepository.java
-package com.fleet.repository;
+package com.fleet_management.repository;
 
-import com.fleet.entity.DeliveryTask;
-import com.fleet.entity.DeliveryStatus;
+import com.fleet_management.entity.DeliveryTask;
+import com.fleet_management.entity.DeliveryStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 

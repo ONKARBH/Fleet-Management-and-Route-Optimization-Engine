@@ -2,6 +2,7 @@
 package com.fleet_management.controller;
 
 import com.fleet_management.entity.Vehicle;
+import com.fleet_management.repository.VehicleRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
