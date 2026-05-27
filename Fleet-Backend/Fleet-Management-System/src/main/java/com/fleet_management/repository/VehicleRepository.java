@@ -1,8 +1,8 @@
-// repository/VehicleRepository.java
+// src/main/java/com/fleet_management/repository/VehicleRepository.java
 package com.fleet_management.repository;
 
-import com.fleet.entity.Vehicle;
-import com.fleet.entity.VehicleStatus;
+import com.fleet_management.entity.Vehicle;
+import com.fleet_management.entity.VehicleStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.List;

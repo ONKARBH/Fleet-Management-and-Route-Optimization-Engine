@@ -1,5 +1,5 @@
 // entity/DeliveryTask.java
-package com.fleet.entity;
+package com.fleet_management.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
