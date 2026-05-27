@@ -41,6 +41,3 @@ public class Route {
     }
 }
 
-enum RouteStatus {
-    PLANNED, ACTIVE, COMPLETED, CANCELLED
-}
