@@ -1,4 +1,4 @@
-// service/optimization/RouteOptimizationService.java
+// src/main/java/com/fleet_management/service/RouteOptimizationService.java
 package com.fleet_management.service;
 
 import com.fleet_management.dto.Coordinate;
@@ -16,130 +16,162 @@ public class RouteOptimizationService {
     private OSRMService osrmService;
 
     /**
-     * Greedy Nearest Neighbor Algorithm for TSP
-     * Complexity: O(n²)
+     * Optimize route using Nearest Neighbor algorithm (Greedy)
+     * Time Complexity: O(n²)
      */
-    public Mono<List<Integer>> greedyTSP(double[][] distanceMatrix, int startNode) {
-        return Mono.fromCallable(() -> {
-            int n = distanceMatrix.length;
-            boolean[] visited = new boolean[n];
-            List<Integer> path = new ArrayList<>();
+    public Mono<OptimizedRoute> optimizeRouteNearestNeighbor(List<DeliveryTask> deliveries, Coordinate startPoint) {
+        List<Coordinate> coordinates = new ArrayList<>();
+        coordinates.add(startPoint);
+        for (DeliveryTask task : deliveries) {
+            coordinates.add(new Coordinate(task.getLatitude(), task.getLongitude()));
+        }
 
-            int currentNode = startNode;
-            path.add(currentNode);
-            visited[currentNode] = true;
-
-            for (int step = 1; step < n; step++) {
-                int nextNode = -1;
-                double minDistance = Double.MAX_VALUE;
-
-                for (int candidate = 0; candidate < n; candidate++) {
-                    if (!visited[candidate] && distanceMatrix[currentNode][candidate] < minDistance) {
-                        minDistance = distanceMatrix[currentNode][candidate];
-                        nextNode = candidate;
-                    }
-                }
-
-                if (nextNode != -1) {
-                    path.add(nextNode);
-                    visited[nextNode] = true;
-                    currentNode = nextNode;
-                }
-            }
-
-            return path;
-        });
+        return osrmService.getDistanceMatrix(coordinates)
+                .map(distanceMatrix -> {
+                    List<Integer> optimizedOrder = nearestNeighborTSP(distanceMatrix);
+                    return buildOptimizedRoute(deliveries, optimizedOrder, distanceMatrix);
+                });
     }
 
     /**
-     * 2-OPT Algorithm for TSP Improvement
+     * Nearest Neighbor algorithm for TSP
+     */
+    private List<Integer> nearestNeighborTSP(double[][] distanceMatrix) {
+        int n = distanceMatrix.length;
+        boolean[] visited = new boolean[n];
+        List<Integer> path = new ArrayList<>();
+
+        // Start from depot (index 0)
+        int current = 0;
+        path.add(current);
+        visited[current] = true;
+
+        for (int step = 1; step < n; step++) {
+            int next = -1;
+            double minDistance = Double.MAX_VALUE;
+
+            for (int candidate = 0; candidate < n; candidate++) {
+                if (!visited[candidate] && distanceMatrix[current][candidate] < minDistance) {
+                    minDistance = distanceMatrix[current][candidate];
+                    next = candidate;
+                }
+            }
+
+            if (next != -1) {
+                path.add(next);
+                visited[next] = true;
+                current = next;
+            }
+        }
+
+        return path;
+    }
+
+    /**
+     * Optimize route using 2-OPT algorithm (improves Nearest Neighbor)
+     */
+    public Mono<OptimizedRoute> optimizeRouteWith2OPT(List<DeliveryTask> deliveries, Coordinate startPoint) {
+        List<Coordinate> coordinates = new ArrayList<>();
+        coordinates.add(startPoint);
+        for (DeliveryTask task : deliveries) {
+            coordinates.add(new Coordinate(task.getLatitude(), task.getLongitude()));
+        }
+
+        return osrmService.getDistanceMatrix(coordinates)
+                .map(distanceMatrix -> {
+                    List<Integer> initialPath = nearestNeighborTSP(distanceMatrix);
+                    List<Integer> optimizedPath = twoOptOptimization(distanceMatrix, initialPath);
+                    return buildOptimizedRoute(deliveries, optimizedPath, distanceMatrix);
+                });
+    }
+
+    /**
+     * 2-OPT algorithm for TSP optimization
      * Reduces path crossing and improves route quality
      */
-    public Mono<List<Integer>> twoOptTSP(double[][] distanceMatrix, List<Integer> initialPath) {
-        return Mono.fromCallable(() -> {
-            List<Integer> bestPath = new ArrayList<>(initialPath);
-            boolean improved = true;
+    private List<Integer> twoOptOptimization(double[][] distanceMatrix, List<Integer> path) {
+        List<Integer> bestPath = new ArrayList<>(path);
+        boolean improved = true;
+        int iterations = 0;
+        int maxIterations = 100;
 
-            while (improved) {
-                improved = false;
-                for (int i = 1; i < bestPath.size() - 1; i++) {
-                    for (int j = i + 1; j < bestPath.size(); j++) {
-                        double oldDistance = distanceMatrix[bestPath.get(i-1)][bestPath.get(i)] +
-                                distanceMatrix[bestPath.get(j)][bestPath.get(j-1)];
-                        double newDistance = distanceMatrix[bestPath.get(i-1)][bestPath.get(j-1)] +
-                                distanceMatrix[bestPath.get(i)][bestPath.get(j)];
+        while (improved && iterations < maxIterations) {
+            improved = false;
+            iterations++;
 
-                        if (newDistance < oldDistance) {
-                            reverse(bestPath, i, j-1);
-                            improved = true;
-                        }
+            for (int i = 1; i < bestPath.size() - 1; i++) {
+                for (int j = i + 1; j < bestPath.size(); j++) {
+                    double currentDistance = calculatePathDistance(distanceMatrix, bestPath);
+                    swap(bestPath, i, j);
+                    double newDistance = calculatePathDistance(distanceMatrix, bestPath);
+
+                    if (newDistance < currentDistance) {
+                        improved = true;
+                    } else {
+                        // Swap back if not improved
+                        swap(bestPath, i, j);
                     }
                 }
             }
-            return bestPath;
-        });
+        }
+
+        return bestPath;
     }
 
-    private void reverse(List<Integer> path, int start, int end) {
-        while (start < end) {
-            int temp = path.get(start);
-            path.set(start, path.get(end));
-            path.set(end, temp);
-            start++;
-            end--;
+    private void swap(List<Integer> path, int i, int j) {
+        while (i < j) {
+            int temp = path.get(i);
+            path.set(i, path.get(j));
+            path.set(j, temp);
+            i++;
+            j--;
         }
+    }
+
+    private double calculatePathDistance(double[][] distanceMatrix, List<Integer> path) {
+        double total = 0;
+        for (int i = 0; i < path.size() - 1; i++) {
+            total += distanceMatrix[path.get(i)][path.get(i + 1)];
+        }
+        return total;
     }
 
     /**
-     * Main optimization method
+     * Build optimized route object from path
      */
-    public Mono<Boolean> optimizeRoute(List<DeliveryTask> deliveries, Long startDepotId) {
-        if (deliveries == null || deliveries.isEmpty()) {
-            return Mono.error(new IllegalArgumentException("No deliveries to optimize"));
+    private OptimizedRoute buildOptimizedRoute(List<DeliveryTask> deliveries,
+                                               List<Integer> path,
+                                               double[][] distanceMatrix) {
+        List<DeliveryTask> optimizedSequence = new ArrayList<>();
+        List<Integer> optimizedIndices = new ArrayList<>();
+        double totalDistance = 0;
+        double totalDuration = 0;
+
+        // Skip first point (depot) and map to actual deliveries
+        for (int i = 1; i < path.size(); i++) {
+            int deliveryIndex = path.get(i) - 1;
+            if (deliveryIndex >= 0 && deliveryIndex < deliveries.size()) {
+                DeliveryTask task = deliveries.get(deliveryIndex);
+                task.setSequenceOrder(i);
+                optimizedSequence.add(task);
+                optimizedIndices.add(deliveryIndex);
+            }
+
+            if (i > 0) {
+                totalDistance += distanceMatrix[path.get(i-1)][path.get(i)];
+                totalDuration += distanceMatrix[path.get(i-1)][path.get(i)] / 50.0; // 50 km/h avg speed
+            }
         }
 
-        // Convert deliveries to coordinates
-        List<Coordinate> coordinates = deliveries.stream()
-                .map(d -> new Coordinate((Double) d.getLatitude(), (Double)d.getLongitude()))
-                .toList();
-
-        // Add depot/warehouse as start point (assuming depot at (0,0) or pass from config)
-        List<Coordinate> allPoints = new ArrayList<>();
-        allPoints.add(new Coordinate(0.0, 0.0)); // Depot
-        allPoints.addAll(coordinates);
-
-        // Get distance matrix from external API
-        return osrmService.getDistanceMatrix(allPoints)
-                .flatMap(distanceMatrix -> {
-                    // Run TSP algorithm
-                    return greedyTSP(distanceMatrix, 0) // Start from depot
-                            .flatMap(greedyPath -> twoOptTSP(distanceMatrix, greedyPath))
-                            .map(optimizedPath -> {
-                                // Convert indices back to deliveries
-                                List<DeliveryTask> optimizedSequence = new ArrayList<>();
-                                double totalDistance = 0;
-
-                                for (int i = 1; i < optimizedPath.size(); i++) {
-                                    int deliveryIndex = optimizedPath.get(i) - 1;
-                                    if (deliveryIndex >= 0 && deliveryIndex < deliveries.size()) {
-                                        optimizedSequence.add(deliveries.get(deliveryIndex));
-                                    }
-
-                                    if (i > 0) {
-                                        totalDistance += distanceMatrix[optimizedPath.get(i-1)][optimizedPath.get(i)];
-                                    }
-                                }
-
-                                // Set sequence order
-                                for (int i = 0; i < optimizedSequence.size(); i++) {
-                                    optimizedSequence.get(i).setSequenceOrder(i + 1);
-                                }
-
-                                // Assuming average speed 50 km/h
-                                return OptimizedRoute.builder()
-                                        .equals(optimizedSequence);
-                            });
-                });
+        return OptimizedRoute.builder()
+                .optimizedSequence(optimizedSequence)
+                .optimizedOrderIndices(optimizedIndices)
+                .totalDistance(totalDistance)
+                .totalDuration(totalDuration)
+                .totalFuelCost(totalDistance * 12.0)
+                .totalTimeHours(totalDuration)
+                .distanceMatrix(convertToDoubleList(distanceMatrix))
+                .build();
     }
 
     private List<List<Double>> convertToDoubleList(double[][] matrix) {

@@ -39,5 +39,8 @@ public class Driver {
         createdAt = LocalDateTime.now();
         status = DriverStatus.AVAILABLE;
     }
+
+    public void setStatus(DriverStatus driverStatus) {
+    }
 }
 
