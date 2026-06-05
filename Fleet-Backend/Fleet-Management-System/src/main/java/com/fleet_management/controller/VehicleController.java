@@ -1,9 +1,8 @@
-// controller/VehicleController.java
+// src/main/java/com/fleet_management/controller/VehicleController.java
 package com.fleet_management.controller;
 
 import com.fleet_management.entity.Vehicle;
 import com.fleet_management.repository.VehicleRepository;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,20 +16,26 @@ public class VehicleController {
     @Autowired
     private VehicleRepository vehicleRepository;
 
+    // Create a new vehicle
     @PostMapping
-    public ResponseEntity<Vehicle> registerVehicle(@Valid @RequestBody Vehicle vehicle) {
-        if (vehicleRepository.existsByLicensePlate(vehicle.getLicensePlate())) {
-            throw new RuntimeException("Vehicle with this license plate already exists");
+    public ResponseEntity<Vehicle> createVehicle(@RequestBody Vehicle vehicle) {
+        try {
+            Vehicle savedVehicle = vehicleRepository.save(vehicle);
+            return new ResponseEntity<>(savedVehicle, HttpStatus.CREATED);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        Vehicle savedVehicle = vehicleRepository.save(vehicle);
-        return new ResponseEntity<>(savedVehicle, HttpStatus.CREATED);
     }
 
+    // Get all vehicles
     @GetMapping
     public ResponseEntity<List<Vehicle>> getAllVehicles() {
-        return ResponseEntity.ok(vehicleRepository.findAll());
+        List<Vehicle> vehicles = vehicleRepository.findAll();
+        return ResponseEntity.ok(vehicles);
     }
 
+    // Get vehicle by ID
     @GetMapping("/{id}")
     public ResponseEntity<Vehicle> getVehicleById(@PathVariable Long id) {
         return vehicleRepository.findById(id)
@@ -38,15 +43,18 @@ public class VehicleController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // Update vehicle
     @PutMapping("/{id}")
-    public ResponseEntity<Vehicle> updateVehicle(@PathVariable Long id, @Valid @RequestBody Vehicle vehicle) {
+    public ResponseEntity<Vehicle> updateVehicle(@PathVariable Long id, @RequestBody Vehicle vehicle) {
         if (!vehicleRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
         vehicle.setId(id);
-        return ResponseEntity.ok(vehicleRepository.save(vehicle));
+        Vehicle updatedVehicle = vehicleRepository.save(vehicle);
+        return ResponseEntity.ok(updatedVehicle);
     }
 
+    // Delete vehicle
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteVehicle(@PathVariable Long id) {
         if (!vehicleRepository.existsById(id)) {
@@ -54,12 +62,5 @@ public class VehicleController {
         }
         vehicleRepository.deleteById(id);
         return ResponseEntity.noContent().build();
-    }
-
-    @PatchMapping("/{id}/assign-driver/{driverId}")
-    public ResponseEntity<Vehicle> assignDriver(@PathVariable Long id, @PathVariable Long driverId) {
-        // Implementation for assigning driver to vehicle
-        // This will be completed with Driver entity
-        return ResponseEntity.ok().build();
     }
 }

@@ -1,10 +1,9 @@
 // service/optimization/RouteOptimizationService.java
 package com.fleet_management.service;
 
-import com.fleet.dto.Coordinate;
+import com.fleet_management.dto.Coordinate;
 import com.fleet_management.dto.OptimizedRoute;
 import com.fleet_management.entity.DeliveryTask;
-import com.fleet.service.external.OSRMService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -94,14 +93,14 @@ public class RouteOptimizationService {
     /**
      * Main optimization method
      */
-    public Mono<OptimizedRoute> optimizeRoute(List<DeliveryTask> deliveries, Long startDepotId) {
+    public Mono<Boolean> optimizeRoute(List<DeliveryTask> deliveries, Long startDepotId) {
         if (deliveries == null || deliveries.isEmpty()) {
             return Mono.error(new IllegalArgumentException("No deliveries to optimize"));
         }
 
         // Convert deliveries to coordinates
         List<Coordinate> coordinates = deliveries.stream()
-                .map(d -> new Coordinate(d.getLatitude(), d.getLongitude()))
+                .map(d -> new Coordinate((Double) d.getLatitude(), (Double)d.getLongitude()))
                 .toList();
 
         // Add depot/warehouse as start point (assuming depot at (0,0) or pass from config)
@@ -136,12 +135,9 @@ public class RouteOptimizationService {
                                     optimizedSequence.get(i).setSequenceOrder(i + 1);
                                 }
 
+                                // Assuming average speed 50 km/h
                                 return OptimizedRoute.builder()
-                                        .optimizedSequence(optimizedSequence)
-                                        .totalDistance(totalDistance)
-                                        .totalDuration(totalDistance / 50.0) // Assuming average speed 50 km/h
-                                        .distanceMatrix(convertToDoubleList(distanceMatrix))
-                                        .build();
+                                        .equals(optimizedSequence);
                             });
                 });
     }
