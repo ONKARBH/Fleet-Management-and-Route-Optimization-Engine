@@ -43,7 +43,7 @@ public class VehicleController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Update vehicle
+    // Update vehicle with id
     @PutMapping("/{id}")
     public ResponseEntity<Vehicle> updateVehicle(@PathVariable Long id, @RequestBody Vehicle vehicle) {
         if (!vehicleRepository.existsById(id)) {
