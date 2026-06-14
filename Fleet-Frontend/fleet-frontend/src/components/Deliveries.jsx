@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaPlus, FaTrash, FaPlay, FaCheck, FaBox } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaPlay, FaCheck, FaBox, FaSync, FaTimesCircle, FaRedo } from 'react-icons/fa';
 import { getDeliveries, deleteDelivery, updateDeliveryStatus } from '../services/api';
 import AddDeliveryModal from './Modals/AddDeliveryModal';
 
@@ -8,6 +8,7 @@ const Deliveries = ({ triggerRefresh }) => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [updating, setUpdating] = useState(null);
 
   useEffect(() => {
     loadDeliveries();
@@ -15,6 +16,7 @@ const Deliveries = ({ triggerRefresh }) => {
 
   const loadDeliveries = async () => {
     try {
+      setLoading(true);
       const response = await getDeliveries();
       setDeliveries(response.data);
     } catch (error) {
@@ -27,32 +29,138 @@ const Deliveries = ({ triggerRefresh }) => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this delivery?')) {
       await deleteDelivery(id);
-      loadDeliveries();
-      triggerRefresh();
+      await loadDeliveries();
+      if (triggerRefresh) triggerRefresh();
     }
   };
 
-  const handleStatusUpdate = async (id, newStatus) => {
-    await updateDeliveryStatus(id, newStatus, 1);
-    loadDeliveries();
-    triggerRefresh();
+  const handleStatusUpdate = async (id, newStatus, vehicleId = 1) => {
+    setUpdating(id);
+    try {
+      await updateDeliveryStatus(id, newStatus, vehicleId);
+      await loadDeliveries();
+      if (triggerRefresh) triggerRefresh();
+      
+      // Show success message
+      showTemporaryMessage(`Delivery ${id} status updated to ${newStatus}`, 'success');
+    } catch (error) {
+      console.error('Error updating status:', error);
+      showTemporaryMessage(`Failed to update delivery ${id}`, 'error');
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const showTemporaryMessage = (message, type) => {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `toast-message ${type}`;
+    msgDiv.textContent = message;
+    document.body.appendChild(msgDiv);
+    setTimeout(() => msgDiv.remove(), 3000);
   };
 
   const getStatusBadge = (status) => {
-    const statusClass = {
-      'UNASSIGNED': 'badge-secondary',
-      'DISPATCHED': 'badge-info',
-      'IN_TRANSIT': 'badge-warning',
-      'DELIVERED': 'badge-success',
-      'FAILED': 'badge-danger'
-    }[status] || 'badge-secondary';
-    return <span className={`badge ${statusClass}`}>{status || 'UNASSIGNED'}</span>;
+    const statusConfig = {
+      'UNASSIGNED': { class: 'badge-secondary', icon: <FaBox />, text: 'Unassigned' },
+      'DISPATCHED': { class: 'badge-info', icon: <FaSync />, text: 'Dispatched' },
+      'IN_TRANSIT': { class: 'badge-warning', icon: <FaPlay />, text: 'In Transit' },
+      'DELIVERED': { class: 'badge-success', icon: <FaCheck />, text: 'Delivered' },
+      'FAILED': { class: 'badge-danger', icon: <FaTimesCircle />, text: 'Failed' },
+      'CANCELLED': { class: 'badge-danger', icon: <FaTimesCircle />, text: 'Cancelled' }
+    };
+    const config = statusConfig[status] || statusConfig['UNASSIGNED'];
+    return (
+      <span className={`badge ${config.class}`}>
+        {config.icon} {config.text}
+      </span>
+    );
+  };
+
+  const getAvailableActions = (status, id) => {
+    const actions = [];
+    
+    switch(status) {
+      case 'UNASSIGNED':
+        actions.push(
+          <button 
+            key="dispatch"
+            className="btn-icon-info" 
+            onClick={() => handleStatusUpdate(id, 'DISPATCHED')}
+            title="Dispatch Delivery"
+            disabled={updating === id}
+          >
+            <FaSync /> Dispatch
+          </button>
+        );
+        break;
+      case 'DISPATCHED':
+        actions.push(
+          <button 
+            key="start"
+            className="btn-icon-warning" 
+            onClick={() => handleStatusUpdate(id, 'IN_TRANSIT')}
+            title="Start Delivery"
+            disabled={updating === id}
+          >
+            <FaPlay /> Start
+          </button>
+        );
+        break;
+      case 'IN_TRANSIT':
+        actions.push(
+          <button 
+            key="complete"
+            className="btn-icon-success" 
+            onClick={() => handleStatusUpdate(id, 'DELIVERED')}
+            title="Complete Delivery"
+            disabled={updating === id}
+          >
+            <FaCheck /> Complete
+          </button>,
+          <button 
+            key="fail"
+            className="btn-icon-danger" 
+            onClick={() => handleStatusUpdate(id, 'FAILED')}
+            title="Mark as Failed"
+            disabled={updating === id}
+          >
+            <FaTimesCircle /> Fail
+          </button>
+        );
+        break;
+      case 'FAILED':
+        actions.push(
+          <button 
+            key="retry"
+            className="btn-icon-warning" 
+            onClick={() => handleStatusUpdate(id, 'DISPATCHED')}
+            title="Retry Delivery"
+            disabled={updating === id}
+          >
+            <FaRedo /> Retry
+          </button>
+        );
+        break;
+      default:
+        break;
+    }
+    
+    return actions;
   };
 
   const filteredDeliveries = deliveries.filter(delivery =>
     delivery.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    delivery.deliveryAddress?.toLowerCase().includes(searchTerm.toLowerCase())
+    delivery.deliveryAddress?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    delivery.id?.toString().includes(searchTerm)
   );
+
+  const stats = {
+    total: deliveries.length,
+    dispatched: deliveries.filter(d => d.status === 'DISPATCHED').length,
+    inTransit: deliveries.filter(d => d.status === 'IN_TRANSIT').length,
+    delivered: deliveries.filter(d => d.status === 'DELIVERED').length,
+    failed: deliveries.filter(d => d.status === 'FAILED').length
+  };
 
   if (loading) return <div className="loading">Loading deliveries...</div>;
 
@@ -65,13 +173,40 @@ const Deliveries = ({ triggerRefresh }) => {
         </button>
       </div>
 
+      {/* Statistics Cards */}
+      <div className="delivery-stats">
+        <div className="stat-card-mini">
+          <span className="stat-value">{stats.total}</span>
+          <span className="stat-label">Total</span>
+        </div>
+        <div className="stat-card-mini">
+          <span className="stat-value">{stats.dispatched}</span>
+          <span className="stat-label">Dispatched</span>
+        </div>
+        <div className="stat-card-mini">
+          <span className="stat-value">{stats.inTransit}</span>
+          <span className="stat-label">In Transit</span>
+        </div>
+        <div className="stat-card-mini">
+          <span className="stat-value">{stats.delivered}</span>
+          <span className="stat-label">Delivered</span>
+        </div>
+        <div className="stat-card-mini">
+          <span className="stat-value">{stats.failed}</span>
+          <span className="stat-label">Failed</span>
+        </div>
+      </div>
+
       <div className="search-bar">
         <input
           type="text"
-          placeholder="Search by customer or address..."
+          placeholder="Search by ID, customer or address..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
+        <button className="btn-refresh" onClick={loadDeliveries}>
+          <FaSync /> Refresh
+        </button>
       </div>
 
       <div className="deliveries-table-container">
@@ -81,7 +216,7 @@ const Deliveries = ({ triggerRefresh }) => {
               <th>ID</th>
               <th>Customer</th>
               <th>Address</th>
-              <th>Weight (kg)</th>
+              <th>Weight</th>
               <th>Sequence</th>
               <th>Status</th>
               <th>Actions</th>
@@ -89,41 +224,25 @@ const Deliveries = ({ triggerRefresh }) => {
           </thead>
           <tbody>
             {filteredDeliveries.map(delivery => (
-              <tr key={delivery.id}>
+              <tr key={delivery.id} className={`delivery-row status-${delivery.status?.toLowerCase()}`}>
                 <td>{delivery.id}</td>
-                <td>{delivery.customerName || '-'}</td>
+                <td><strong>{delivery.customerName || '-'}</strong></td>
                 <td>{delivery.deliveryAddress || '-'}</td>
-                <td>{delivery.packageWeight || '-'}</td>
+                <td>{delivery.packageWeight || 0} kg</td>
                 <td>{delivery.sequenceOrder || '-'}</td>
                 <td>{getStatusBadge(delivery.status)}</td>
-                <td>
-                  <div className="action-buttons">
-                    {delivery.status === 'DISPATCHED' && (
-                      <button 
-                        className="btn-icon-warning" 
-                        onClick={() => handleStatusUpdate(delivery.id, 'IN_TRANSIT')}
-                        title="Start Delivery"
-                      >
-                        <FaPlay />
-                      </button>
-                    )}
-                    {delivery.status === 'IN_TRANSIT' && (
-                      <button 
-                        className="btn-icon-success" 
-                        onClick={() => handleStatusUpdate(delivery.id, 'DELIVERED')}
-                        title="Complete Delivery"
-                      >
-                        <FaCheck />
-                      </button>
-                    )}
+                <td className="actions-cell">
+                  <div className="action-buttons-group">
+                    {getAvailableActions(delivery.status, delivery.id)}
                     <button 
                       className="btn-icon-danger" 
                       onClick={() => handleDelete(delivery.id)}
-                      title="Delete"
+                      title="Delete Delivery"
                     >
                       <FaTrash />
                     </button>
                   </div>
+                  {updating === delivery.id && <span className="updating-spinner">Updating...</span>}
                 </td>
               </tr>
             ))}
@@ -133,6 +252,7 @@ const Deliveries = ({ triggerRefresh }) => {
 
       {filteredDeliveries.length === 0 && (
         <div className="empty-state">
+          <FaBox />
           <p>No deliveries found. Click "Add Delivery" to get started.</p>
         </div>
       )}

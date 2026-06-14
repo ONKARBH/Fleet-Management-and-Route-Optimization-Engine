@@ -1,26 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  FaTruck, 
-  FaIdCard, 
-  FaBox, 
-  FaCheckCircle,
-  FaHourglassHalf,
-  FaPlay,
-  FaExclamationTriangle 
+  FaTruck, FaIdCard, FaBox, FaCheckCircle, FaHourglassHalf, 
+  FaPlay, FaSync, FaTimesCircle, FaChartLine 
 } from 'react-icons/fa';
-import { 
-  PieChart, 
-  Pie, 
-  Cell, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend,
-  ResponsiveContainer 
-} from 'recharts';
 import { getVehicles, getDrivers, getDeliveries } from '../services/api';
 
 const Dashboard = ({ refresh }) => {
@@ -30,14 +12,18 @@ const Dashboard = ({ refresh }) => {
     deliveries: 0,
     completed: 0,
     inTransit: 0,
-    dispatched: 0
+    dispatched: 0,
+    failed: 0
   });
-  const [deliveryData, setDeliveryData] = useState([]);
   const [recentDeliveries, setRecentDeliveries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState(new Date());
 
   useEffect(() => {
     loadDashboardData();
+    // Auto refresh every 10 seconds
+    const interval = setInterval(loadDashboardData, 10000);
+    return () => clearInterval(interval);
   }, [refresh]);
 
   const loadDashboardData = async () => {
@@ -55,6 +41,7 @@ const Dashboard = ({ refresh }) => {
       const completed = deliveries.filter(d => d.status === 'DELIVERED').length;
       const inTransit = deliveries.filter(d => d.status === 'IN_TRANSIT').length;
       const dispatched = deliveries.filter(d => d.status === 'DISPATCHED').length;
+      const failed = deliveries.filter(d => d.status === 'FAILED').length;
 
       setStats({
         vehicles: vehicles.length,
@@ -62,21 +49,13 @@ const Dashboard = ({ refresh }) => {
         deliveries: deliveries.length,
         completed,
         inTransit,
-        dispatched
+        dispatched,
+        failed
       });
 
-      // Prepare chart data
-      const statusData = [
-        { name: 'Delivered', value: completed, color: '#48bb78' },
-        { name: 'In Transit', value: inTransit, color: '#4299e1' },
-        { name: 'Dispatched', value: dispatched, color: '#ed8936' },
-        { name: 'Pending', value: deliveries.length - (completed + inTransit + dispatched), color: '#a0aec0' }
-      ];
-      setDeliveryData(statusData);
-
-      // Recent deliveries
+      // Get recent deliveries (last 5 updated)
       setRecentDeliveries(deliveries.slice(-5).reverse());
-
+      setLastUpdate(new Date());
     } catch (error) {
       console.error('Error loading dashboard:', error);
     } finally {
@@ -84,8 +63,8 @@ const Dashboard = ({ refresh }) => {
     }
   };
 
-  const StatCard = ({ icon, label, value, color }) => (
-    <div className="stat-card" style={{ borderLeftColor: color }}>
+  const StatCard = ({ icon, label, value, color, bgColor }) => (
+    <div className="stat-card" style={{ borderLeftColor: color, background: bgColor }}>
       <div className="stat-card-icon" style={{ color }}>{icon}</div>
       <div className="stat-card-info">
         <h3>{value}</h3>
@@ -94,66 +73,67 @@ const Dashboard = ({ refresh }) => {
     </div>
   );
 
+  const getStatusIcon = (status) => {
+    switch(status) {
+      case 'DELIVERED': return <FaCheckCircle style={{ color: '#48bb78' }} />;
+      case 'IN_TRANSIT': return <FaPlay style={{ color: '#4299e1' }} />;
+      case 'DISPATCHED': return <FaHourglassHalf style={{ color: '#ed8936' }} />;
+      case 'FAILED': return <FaTimesCircle style={{ color: '#f56565' }} />;
+      default: return <FaBox style={{ color: '#a0aec0' }} />;
+    }
+  };
+
   if (loading) return <div className="loading">Loading dashboard...</div>;
 
   return (
     <div className="dashboard">
-      <h2 className="page-title">Dashboard</h2>
+      <div className="dashboard-header">
+        <h2><FaChartLine /> Dashboard</h2>
+        <div className="refresh-info">
+          <span>Last updated: {lastUpdate.toLocaleTimeString()}</span>
+          <button className="btn-refresh-small" onClick={loadDashboardData}>
+            <FaSync /> Refresh
+          </button>
+        </div>
+      </div>
       
       <div className="stats-grid">
-        <StatCard icon={<FaTruck />} label="Total Vehicles" value={stats.vehicles} color="#4299e1" />
-        <StatCard icon={<FaIdCard />} label="Total Drivers" value={stats.drivers} color="#48bb78" />
-        <StatCard icon={<FaBox />} label="Total Deliveries" value={stats.deliveries} color="#ed8936" />
-        <StatCard icon={<FaCheckCircle />} label="Completed" value={stats.completed} color="#38a169" />
-        <StatCard icon={<FaPlay />} label="In Transit" value={stats.inTransit} color="#3182ce" />
-        <StatCard icon={<FaHourglassHalf />} label="Dispatched" value={stats.dispatched} color="#dd6b20" />
+        <StatCard icon={<FaTruck />} label="Total Vehicles" value={stats.vehicles} color="#4299e1" bgColor="#ebf8ff" />
+        <StatCard icon={<FaIdCard />} label="Total Drivers" value={stats.drivers} color="#48bb78" bgColor="#f0fff4" />
+        <StatCard icon={<FaBox />} label="Total Deliveries" value={stats.deliveries} color="#ed8936" bgColor="#fffaf0" />
+        <StatCard icon={<FaCheckCircle />} label="Completed" value={stats.completed} color="#38a169" bgColor="#f0fff4" />
+        <StatCard icon={<FaPlay />} label="In Transit" value={stats.inTransit} color="#3182ce" bgColor="#ebf8ff" />
+        <StatCard icon={<FaHourglassHalf />} label="Dispatched" value={stats.dispatched} color="#dd6b20" bgColor="#fffaf0" />
+        <StatCard icon={<FaTimesCircle />} label="Failed" value={stats.failed} color="#e53e3e" bgColor="#fff5f5" />
       </div>
 
-      <div className="charts-grid">
-        <div className="chart-card">
-          <h3>Delivery Status Distribution</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={deliveryData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {deliveryData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="chart-card">
-          <h3>Recent Activity</h3>
-          <div className="recent-activity">
-            {recentDeliveries.length === 0 ? (
-              <p>No recent deliveries</p>
-            ) : (
-              recentDeliveries.map(delivery => (
-                <div key={delivery.id} className="activity-item">
-                  <div className="activity-icon">
-                    {delivery.status === 'DELIVERED' ? <FaCheckCircle style={{ color: '#48bb78' }} /> :
-                     delivery.status === 'IN_TRANSIT' ? <FaPlay style={{ color: '#4299e1' }} /> :
-                     <FaHourglassHalf style={{ color: '#ed8936' }} />}
-                  </div>
-                  <div className="activity-details">
-                    <p className="activity-title">Delivery #{delivery.id} - {delivery.customerName}</p>
-                    <p className="activity-status">Status: {delivery.status}</p>
-                  </div>
+      <div className="recent-activity-card">
+        <h3>Recent Activity</h3>
+        <div className="recent-activity-list">
+          {recentDeliveries.length === 0 ? (
+            <div className="empty-activity">
+              <p>No recent deliveries. Create some deliveries to see activity here.</p>
+            </div>
+          ) : (
+            recentDeliveries.map(delivery => (
+              <div key={delivery.id} className="activity-item">
+                <div className="activity-icon">
+                  {getStatusIcon(delivery.status)}
                 </div>
-              ))
-            )}
-          </div>
+                <div className="activity-details">
+                  <p className="activity-title">
+                    Delivery #{delivery.id} - {delivery.customerName}
+                  </p>
+                  <p className="activity-status">
+                    Status: <strong>{delivery.status}</strong>
+                    {delivery.sequenceOrder && ` | Sequence: ${delivery.sequenceOrder}`}
+                    {delivery.packageWeight && ` | Weight: ${delivery.packageWeight} kg`}
+                  </p>
+                  <p className="activity-address">{delivery.deliveryAddress}</p>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

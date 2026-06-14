@@ -685,3 +685,209 @@
     padding: 0.5rem;
   }
 }
+
+
+
+/* Delivery Stats */
+.delivery-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card-mini {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.stat-card-mini .stat-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  display: block;
+  color: #2d3748;
+}
+
+.stat-card-mini .stat-label {
+  font-size: 0.75rem;
+  color: #718096;
+}
+
+/* Action Buttons Group */
+.action-buttons-group {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.btn-icon-info {
+  background: #bee3f8;
+  color: #2c5282;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+}
+
+.btn-icon-info:hover {
+  background: #90cdf4;
+}
+
+/* Delivery Row Status Colors */
+.delivery-row.status-delivered {
+  background-color: #f0fff4;
+}
+
+.delivery-row.status-in_transit {
+  background-color: #ebf8ff;
+}
+
+.delivery-row.status-dispatched {
+  background-color: #fffaf0;
+}
+
+/* Refresh Button */
+.btn-refresh {
+  background: #e2e8f0;
+  color: #4a5568;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 1rem;
+}
+
+.btn-refresh:hover {
+  background: #cbd5e0;
+}
+
+.btn-refresh-small {
+  background: none;
+  border: none;
+  color: #667eea;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.875rem;
+}
+
+.btn-refresh-small:hover {
+  color: #5a67d8;
+}
+
+/* Dashboard Header */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.refresh-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: #718096;
+}
+
+/* Recent Activity Card */
+.recent-activity-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 2rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.recent-activity-card h3 {
+  margin-bottom: 1rem;
+  color: #2d3748;
+}
+
+.recent-activity-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.empty-activity {
+  text-align: center;
+  padding: 2rem;
+  color: #a0aec0;
+}
+
+.activity-address {
+  font-size: 0.75rem;
+  color: #718096;
+  margin: 0;
+}
+
+/* Updating Spinner */
+.updating-spinner {
+  font-size: 0.7rem;
+  color: #667eea;
+  margin-left: 5px;
+}
+
+/* Toast Messages */
+.toast-message {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  color: white;
+  z-index: 1000;
+  animation: slideIn 0.3s ease;
+}
+
+.toast-message.success {
+  background: #48bb78;
+}
+
+.toast-message.error {
+  background: #f56565;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .action-buttons-group {
+    flex-direction: column;
+  }
+  
+  .btn-icon-info, .btn-icon-warning, .btn-icon-success, .btn-icon-danger {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .dashboard-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .delivery-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
