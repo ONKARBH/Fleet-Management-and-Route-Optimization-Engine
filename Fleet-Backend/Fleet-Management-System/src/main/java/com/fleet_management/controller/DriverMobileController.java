@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
 @CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"})
@@ -54,50 +55,83 @@ public class DriverMobileController {
     /**
      * Update GPS location
      */
-    @PostMapping("/{driverId}/location")
-    public ResponseEntity<Map<String, Object>> updateLocation(
+    // Add to DriverMobileController.java
+
+    @PostMapping("/{driverId}/simulate-location")
+    public ResponseEntity<Map<String, Object>> simulateLocationUpdate(
             @PathVariable Long driverId,
-            @RequestParam Double latitude,
-            @RequestParam Double longitude) {
+            @RequestParam(required = false, defaultValue = "true") boolean continuous) {
 
-        // Get vehicle ID associated with driver
-        // For now, assume vehicle ID is same as driver ID or fetch from driver
-        Long vehicleId = driverId; // Replace with actual vehicle lookup
+        Long vehicleId = driverId;
 
-        gpsTrackingService.updateVehicleLocation(vehicleId, latitude, longitude);
+        if (continuous) {
+            // Start continuous simulation
+            startContinuousSimulation(vehicleId);
+        } else {
+            // Single update
+            gpsTrackingService.simulateLocationUpdate(vehicleId);
+        }
 
-        // Get next delivery
-        DeliveryTask nextDelivery = getNextDeliveryForDriver(driverId);
-
+        Coordinate location = gpsTrackingService.getVehicleLocation(vehicleId);
         Map<String, Object> response = new HashMap<>();
-        response.put("status", "Location updated");
-        response.put("timestamp", java.time.LocalDateTime.now());
-
-        if (nextDelivery != null) {
-            double distance = gpsTrackingService.calculateDistanceToDelivery(vehicleId, nextDelivery);
-            response.put("nextDeliveryId", nextDelivery.getId());
-            response.put("distanceToNextDelivery", distance);
-            response.put("estimatedTimeMinutes", distance / 40 * 60); // 40 km/h average
-        }
-
-        // Check if location data is stale
-        if (gpsTrackingService.isLocationStale(vehicleId)) {
-            response.put("warning", "Location data is stale. Please check GPS signal.");
-        }
+        response.put("status", "Location simulated");
+        response.put("vehicleId", vehicleId);
+        response.put("latitude", location != null ? location.getLatitude() : null);
+        response.put("longitude", location != null ? location.getLongitude() : null);
+        response.put("speed", gpsTrackingService.getVehicleSpeed(vehicleId));
 
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Get next delivery
-     */
-    @GetMapping("/{driverId}/next-delivery")
-    public ResponseEntity<DeliveryTask> getNextDelivery(@PathVariable Long driverId) {
-        DeliveryTask nextDelivery = getNextDeliveryForDriver(driverId);
-        if (nextDelivery == null) {
-            return ResponseEntity.notFound().build();
+    @PostMapping("/{driverId}/stop-simulation")
+    public ResponseEntity<Map<String, String>> stopSimulation(@PathVariable Long driverId) {
+        stopContinuousSimulation(driverId);
+        return ResponseEntity.ok(Map.of("status", "Simulation stopped"));
+    }
+
+    @GetMapping("/{driverId}/current-location")
+    public ResponseEntity<Map<String, Object>> getCurrentLocation(@PathVariable Long driverId) {
+        Long vehicleId = driverId;
+        Coordinate location = gpsTrackingService.getVehicleLocation(vehicleId);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("vehicleId", vehicleId);
+        response.put("latitude", location != null ? location.getLatitude() : null);
+        response.put("longitude", location != null ? location.getLongitude() : null);
+        response.put("speed", gpsTrackingService.getVehicleSpeed(vehicleId));
+        response.put("lastUpdate", gpsTrackingService.getLastLocationUpdate(vehicleId));
+
+        return ResponseEntity.ok(response);
+    }
+
+    // Background simulation for continuous updates
+    private final Map<Long, Thread> simulationThreads = new ConcurrentHashMap<>();
+
+    private void startContinuousSimulation(Long vehicleId) {
+        // Stop existing simulation if any
+        stopContinuousSimulation(vehicleId);
+
+        Thread simulationThread = new Thread(() -> {
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    gpsTrackingService.simulateLocationUpdate(vehicleId);
+                    Thread.sleep(2000); // Update every 2 seconds
+                } catch (InterruptedException e) {
+                    break;
+                }
+            }
+        });
+
+        simulationThread.setDaemon(true);
+        simulationThread.start();
+        simulationThreads.put(vehicleId, simulationThread);
+    }
+
+    private void stopContinuousSimulation(Long vehicleId) {
+        Thread existingThread = simulationThreads.remove(vehicleId);
+        if (existingThread != null) {
+            existingThread.interrupt();
         }
-        return ResponseEntity.ok(nextDelivery);
     }
 
     /**

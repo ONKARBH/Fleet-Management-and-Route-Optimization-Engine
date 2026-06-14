@@ -24,42 +24,41 @@ public class EnhancedDeliveryService {
     @Autowired
     private GPSTrackingService gpsTrackingService;
 
-    /**
-     * Update delivery status with state machine validation
-     */
     @Transactional
     public DeliveryTask updateDeliveryStatus(Long deliveryId, DeliveryStatus newStatus, Long vehicleId) {
+        System.out.println("=== Updating Delivery Status ===");
+        System.out.println("Delivery ID: " + deliveryId);
+        System.out.println("New Status: " + newStatus);
+        System.out.println("Vehicle ID: " + vehicleId);
+
+        // Find delivery
         DeliveryTask task = deliveryTaskRepository.findById(deliveryId)
                 .orElseThrow(() -> new DeliveryNotFoundException(deliveryId));
 
+        System.out.println("Current Status: " + task.getStatus());
+        System.out.println("Customer: " + task.getCustomerName());
+
         // Apply state transition
-        DeliveryTask updatedTask = stateMachine.transition(task, newStatus, LocalDateTime.now());
+        try {
+            DeliveryTask updatedTask = stateMachine.transition(task, newStatus, LocalDateTime.now());
+            System.out.println("Status transition successful");
 
-        // Additional business rules
-        if (newStatus == DeliveryStatus.DELIVERED) {
-            // Verify vehicle was near delivery location
-            if (vehicleId != null && !gpsTrackingService.isNearDeliveryLocation(vehicleId, task)) {
-                throw new RuntimeException("Cannot mark as delivered: Vehicle not near delivery location");
+            // Add additional business logic
+            if (newStatus == DeliveryStatus.DELIVERED) {
+                updatedTask.setActualDeliveryTime(LocalDateTime.now());
+                System.out.println("Delivery completed at: " + LocalDateTime.now());
             }
+
+            DeliveryTask saved = deliveryTaskRepository.save(updatedTask);
+            System.out.println("Delivery saved with status: " + saved.getStatus());
+            return saved;
+
+        } catch (Exception e) {
+            System.err.println("Error in state transition: " + e.getMessage());
+            throw new RuntimeException("Failed to update delivery status: " + e.getMessage());
         }
-
-        if (newStatus == DeliveryStatus.IN_TRANSIT) {
-            // Check if there's a previous undelivered delivery
-            List<DeliveryTask> pendingDeliveries = deliveryTaskRepository
-                    .findByAssignedVehicleIdAndStatus(vehicleId, DeliveryStatus.DISPATCHED);
-
-            if (!pendingDeliveries.isEmpty() && pendingDeliveries.get(0).getId() != deliveryId) {
-                throw new RuntimeException("Please complete deliveries in order. Next delivery is: "
-                        + pendingDeliveries.get(0).getId());
-            }
-        }
-
-        return deliveryTaskRepository.save(updatedTask);
     }
 
-    /**
-     * Cancel a delivery
-     */
     @Transactional
     public DeliveryTask cancelDelivery(Long deliveryId, String reason) {
         DeliveryTask task = deliveryTaskRepository.findById(deliveryId)
@@ -75,9 +74,6 @@ public class EnhancedDeliveryService {
         return deliveryTaskRepository.save(task);
     }
 
-    /**
-     * Retry a failed delivery
-     */
     @Transactional
     public DeliveryTask retryDelivery(Long deliveryId) {
         DeliveryTask task = deliveryTaskRepository.findById(deliveryId)
@@ -93,9 +89,6 @@ public class EnhancedDeliveryService {
         return deliveryTaskRepository.save(task);
     }
 
-    /**
-     * Get possible next statuses
-     */
     public List<DeliveryStatus> getPossibleNextStatuses(Long deliveryId) {
         DeliveryTask task = deliveryTaskRepository.findById(deliveryId)
                 .orElseThrow(() -> new DeliveryNotFoundException(deliveryId));
