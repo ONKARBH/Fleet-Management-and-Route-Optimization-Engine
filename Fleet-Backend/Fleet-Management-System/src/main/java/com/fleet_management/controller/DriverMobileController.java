@@ -68,7 +68,7 @@ public class DriverMobileController {
             // Start continuous simulation
             startContinuousSimulation(vehicleId);
         } else {
-            // Single update
+            // Single update each time
             gpsTrackingService.simulateLocationUpdate(vehicleId);
         }
 
