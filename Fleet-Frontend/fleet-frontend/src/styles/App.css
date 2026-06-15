@@ -891,3 +891,272 @@
     grid-template-columns: repeat(3, 1fr);
   }
 }
+/* GPS Tracker Styles */
+.location-info {
+  margin: 1rem 0;
+}
+
+.location-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.location-card h4 {
+  margin: 0 0 0.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.location-card p {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+.map-container {
+  margin: 1.5rem 0;
+}
+
+.map-visualization {
+  background: #f0f0f0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.map-header {
+  background: #2d3748;
+  color: white;
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.simulation-badge {
+  background: #ed8936;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.map-coordinates {
+  padding: 1rem;
+}
+
+.coordinate-card {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.coordinate-label {
+  font-size: 0.75rem;
+  color: #718096;
+  text-transform: uppercase;
+}
+
+.coordinate-value {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin: 0.25rem 0;
+}
+
+.coordinate-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  background: #48bb78;
+  border-radius: 50%;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.simple-map {
+  background: #e2e8f0;
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.map-grid {
+  display: inline-block;
+  background: #cbd5e0;
+  border: 1px solid #a0aec0;
+}
+
+.map-row {
+  display: flex;
+}
+
+.map-cell {
+  width: 35px;
+  height: 35px;
+  border: 1px solid #a0aec0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f7fafc;
+}
+
+.map-cell.vehicle {
+  background: #667eea;
+  color: white;
+}
+
+.map-legend {
+  margin-top: 1rem;
+  display: flex;
+  gap: 1rem;
+  font-size: 0.75rem;
+}
+
+.legend-box {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background: #f7fafc;
+  border: 1px solid #a0aec0;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.legend-box.vehicle-box {
+  background: #667eea;
+}
+
+.no-location {
+  text-align: center;
+  padding: 3rem;
+  color: #718096;
+}
+
+.no-location svg {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.route-info {
+  margin-top: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.route-distance {
+  font-size: 0.75rem;
+  color: #667eea;
+  font-weight: bold;
+}
+
+.history-info {
+  margin-top: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.history-list {
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.8rem;
+}
+
+.history-time {
+  color: #718096;
+}
+
+.history-coords {
+  font-family: monospace;
+  font-weight: bold;
+}
+/* Speed Bar */
+.speed-info {
+  margin-top: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.speed-bar {
+  margin-top: 0.5rem;
+  background: #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  height: 30px;
+}
+
+.speed-fill {
+  background: linear-gradient(90deg, #48bb78, #4299e1, #ed8936);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 10px;
+  color: white;
+  font-weight: bold;
+  font-size: 0.8rem;
+  transition: width 0.5s ease;
+  border-radius: 10px;
+}
+
+/* Map Title */
+.map-title {
+  font-size: 0.8rem;
+  color: #718096;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+/* Improved Location Card */
+.location-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.location-card h4 {
+  margin: 0 0 0.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Simulation Badge Animation with proper spaces and shining*/
+.simulation-badge {
+  background: #ed8936;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  animation: pulse 1.5s infinite;
+}
