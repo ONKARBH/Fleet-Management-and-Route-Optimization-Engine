@@ -30,7 +30,7 @@ export const createDelivery = (delivery) => api.post('/deliveries', delivery);
 export const updateDelivery = (id, delivery) => api.put(`/deliveries/${id}`, delivery);
 export const deleteDelivery = (id) => api.delete(`/deliveries/${id}`);
 
-// Dispatch APIs
+// Dispatch APIs & Optimization
 export const optimizeRoute = (data) => api.post('/dispatch/create-and-optimize', data);
 
 // Mobile APIs for tracking and updating delivery status
