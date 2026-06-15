@@ -303,7 +303,7 @@ const GPSTracker = () => {
         </div>
       )}
 
-      {/* Tracking History */}
+      {/* Tracking History  of vehicle */}
       {trackingHistory.length > 0 && (
         <div className="history-info">
           <h3><FaHistory /> Location History (Last {trackingHistory.length} updates)</h3>

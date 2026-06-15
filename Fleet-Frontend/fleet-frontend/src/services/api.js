@@ -16,7 +16,7 @@ export const createVehicle = (vehicle) => api.post('/vehicles', vehicle);
 export const updateVehicle = (id, vehicle) => api.put(`/vehicles/${id}`, vehicle);
 export const deleteVehicle = (id) => api.delete(`/vehicles/${id}`);
 
-// Driver APIs
+// Driver APIs    
 export const getDrivers = () => api.get('/drivers');
 export const getDriverById = (id) => api.get(`/drivers/${id}`);
 export const createDriver = (driver) => api.post('/drivers', driver);
