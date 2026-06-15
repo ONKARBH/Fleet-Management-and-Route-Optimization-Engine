@@ -42,6 +42,7 @@ export const updateLocation = (driverId, latitude, longitude) =>
 
 export const getTodayRoute = (driverId) => api.get(`/driver/mobile/${driverId}/today-route`);
 
+//cancel delivery
 export const cancelDelivery = (deliveryId, reason) => 
   api.post(`/driver/mobile/delivery/${deliveryId}/cancel?reason=${reason}`);
 
