@@ -37,6 +37,7 @@ export const optimizeRoute = (data) => api.post('/dispatch/create-and-optimize',
 export const updateDeliveryStatus = (deliveryId, newStatus, vehicleId) => 
   api.put(`/driver/mobile/delivery/${deliveryId}/status?newStatus=${newStatus}&vehicleId=${vehicleId}`);
 
+// Mobile API for updating driver location
 export const updateLocation = (driverId, latitude, longitude) => 
   api.post(`/driver/mobile/${driverId}/location?latitude=${latitude}&longitude=${longitude}`);
 
