@@ -320,7 +320,7 @@ const GPSTracker = () => {
         </div>
       )}
 
-      {/* Speed Chart Placeholder */}
+      {/* Speed Chart Placeholder with proper explaination */}
       {speed > 0 && (
         <div className="speed-info">
           <h3><FaChartLine /> Speed Monitor</h3>
