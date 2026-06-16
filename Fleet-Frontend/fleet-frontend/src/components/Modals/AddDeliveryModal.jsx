@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FaTimes } from 'react-icons/fa';
 import { createDelivery } from '../../services/api';
-
+// CSS styles for the modal
 const AddDeliveryModal = ({ show, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     customerName: '',
