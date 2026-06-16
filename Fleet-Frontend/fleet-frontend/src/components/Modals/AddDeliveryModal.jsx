@@ -59,6 +59,7 @@ const AddDeliveryModal = ({ show, onClose, onSave }) => {
               placeholder="123 Main Street, Mumbai"
             />
           </div>
+          {/* Latitude and Longitude fields with validation for numeric input */}
           <div className="form-group">
             <label>Latitude *</label>
             <input
