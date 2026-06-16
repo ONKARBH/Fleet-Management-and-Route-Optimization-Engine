@@ -49,6 +49,7 @@ const AddDeliveryModal = ({ show, onClose, onSave }) => {
               placeholder="ABC Store"
             />
           </div>
+          {/* Delivery Address field */}
           <div className="form-group">
             <label>Delivery Address *</label>
             <input
