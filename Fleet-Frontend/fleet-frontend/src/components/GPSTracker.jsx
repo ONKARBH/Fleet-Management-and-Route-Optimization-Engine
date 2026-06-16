@@ -242,7 +242,7 @@ const GPSTracker = () => {
                 </div>
               </div>
               
-              {/* Simple map representation */}
+              {/* Simple map representation for route*/}
               <div className="simple-map">
                 <div className="map-title">Vehicle Position Map</div>
                 <div className="map-grid">
