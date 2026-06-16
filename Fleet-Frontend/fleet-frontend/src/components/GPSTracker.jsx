@@ -276,7 +276,7 @@ const GPSTracker = () => {
         </div>
       </div>
 
-      {/* Route Information */}
+      {/* Route Information for understanding */}
       {route.length > 0 && (
         <div className="route-info">
           <h3><FaRoad /> Today's Route</h3>
