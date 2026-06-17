@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaRoute, FaTruck, FaIdCard, FaBox, FaMagic } from 'react-icons/fa';
 import { getVehicles, getDrivers, getDeliveries, optimizeRoute } from '../services/api';
 
+//route optimizer   
 const RouteOptimizer = () => {
   const [vehicles, setVehicles] = useState([]);
   const [drivers, setDrivers] = useState([]);
