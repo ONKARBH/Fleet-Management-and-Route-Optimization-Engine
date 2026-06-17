@@ -32,7 +32,8 @@ const RouteOptimizer = () => {
       console.error('Error loading data:', error);
     }
   };
-
+   
+  // Function to handle toggling delivery selection
   const handleDeliveryToggle = (deliveryId) => {
     setSelectedDeliveries(prev =>
       prev.includes(deliveryId)
