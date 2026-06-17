@@ -17,6 +17,7 @@ const RouteOptimizer = () => {
     loadData();
   }, []);
 
+  // Function to load vehicles, drivers, and deliveries from the API
   const loadData = async () => {
     try {
       const [vehiclesRes, driversRes, deliveriesRes] = await Promise.all([
