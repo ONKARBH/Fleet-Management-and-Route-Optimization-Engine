@@ -24,6 +24,7 @@ const Vehicles = ({ triggerRefresh }) => {
     }
   };
 
+  //handle delete with confirmation
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this vehicle?')) {
       await deleteVehicle(id);
